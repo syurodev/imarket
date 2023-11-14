@@ -1,11 +1,11 @@
-import { DayCollect, DayTable, FinalCollect, MonthTable, ReduxDayTable, ReduxMonthTable } from "@/interfaces/CollectMoney"
+import { DayCollect, DayTable, MonthTable, ReduxDayTable, ReduxMonthTable } from "@/interfaces/CollectMoney"
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
 type InitialState = {
   months: ReduxMonthTable[];
   day: ReduxDayTable[]
   dayCollect: DayCollect[]
-  finalCollect: FinalCollect[]
+  finalCollect: ReduxMonthTable[]
 }
 
 const initialState: InitialState = {
@@ -313,9 +313,18 @@ export const main = createSlice({
 
       if (monthIndex !== -1) {
         // Tháng đã tồn tại, cập nhật dữ liệu
-        state.months[monthIndex].DayData = state.months[monthIndex].DayData || [];
+        let dayArray: ReduxDayTable[] = []
 
-        state.months[monthIndex].DayData = day
+        selectedDays.map(item => {
+          state.day.map(day => {
+            if (day.Ngay === +item) {
+              dayArray.push(day)
+            }
+          })
+        })
+
+        state.months[monthIndex].DayData = dayArray;
+
         state.months[monthIndex].selectedDays = selectedDays
         // Tính toán lại tổng ThuDuoc của những ngày có TrangThai không phải "Đã thu"
         const totalThuDuoc = day
@@ -351,35 +360,27 @@ export const main = createSlice({
             }
           });
 
-          // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
-          const totalThuDuoc = month.DayData
-            .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
-            .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
-
-          // Cập nhật lại SoTienThu và ConLai
-          month.SoTienThu = totalThuDuoc;
-          month.ConLai = 0;
-          month.selectedDays = "all";
         }
+        // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
+        const totalThuDuoc = month.DayData
+          .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
+          .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
+
+        // Cập nhật lại SoTienThu và ConLai
+        month.SoTienThu = totalThuDuoc > 0 ? totalThuDuoc : month.TienPhaiThu;
+        month.ConLai = 0;
+        month.selectedDays = "all";
       });
+      state.finalCollect = []
     },
 
     addOrUpdateMonthCollectForSelected: (state, action: PayloadAction<{ selectedMonths: string[] }>) => {
       const { selectedMonths } = action.payload;
 
-      // Lặp qua mỗi chuỗi selectedMonths
-      selectedMonths.forEach((selectedMonth) => {
-        // Tách chuỗi thành MaKios và Thang
-        const [kios, month] = selectedMonth.split('@');
+      const selectedMonthSet = new Set(selectedMonths);
 
-        // Tìm index của tháng trong state.months
-        const monthIndex = state.months.findIndex((item) => item.MaKios === kios && item.Thang === month);
-
-        // Kiểm tra xem có tìm thấy tháng không
-        if (monthIndex !== -1) {
-          const monthItem = state.months[monthIndex];
-
-          // Nếu có DayData
+      state.months.map((monthItem) => {
+        if (selectedMonthSet.has(`${monthItem.MaKios}@${monthItem.Thang}`)) {
           if (monthItem.DayData && monthItem.DayData.length > 0) {
             // Cập nhật ThuDuoc của các ngày có TrangThai không phải "Đã thu"
             monthItem.DayData.forEach((dayItem) => {
@@ -393,22 +394,91 @@ export const main = createSlice({
               }
             });
 
-            // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
-            const totalThuDuoc = monthItem.DayData
-              .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
-              .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
-
-            // Cập nhật lại SoTienThu và ConLai
-            monthItem.SoTienThu = totalThuDuoc;
-            monthItem.ConLai = 0;
-            monthItem.selectedDays = "all";
           }
+          // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
+          const totalThuDuoc = monthItem.DayData
+            .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
+            .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
+          // Cập nhật lại SoTienThu và ConLai
+          monthItem.SoTienThu = totalThuDuoc > 0 ? totalThuDuoc : monthItem.TienPhaiThu;
+          monthItem.ConLai = 0;
+          monthItem.selectedDays = "all";
+        } else {
+          // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
+          const totalThuDuoc = monthItem.DayData
+            .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
+            .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
+
+          monthItem.SoTienThu = 0;
+          monthItem.ConLai = totalThuDuoc > 0 ? totalThuDuoc : monthItem.TienPhaiThu;
+          monthItem.selectedDays = [];
         }
-      });
+      })
+
+      state.finalCollect = []
     },
 
+    changeMonthInput: (state, action: PayloadAction<{ Month: string; newValue: number }>) => {
+      const { Month, newValue } = action.payload;
+      const [kios, month] = Month.split('@');
+
+      const monthIndex = state.months.findIndex((item) => item.MaKios === kios && item.Thang === month);
+
+      if (state.months[monthIndex]) {
+        state.months[monthIndex].SoTienThu = +newValue
+        state.months[monthIndex].ConLai = state.months[monthIndex].TienPhaiThu < +newValue ? 0 : state.months[monthIndex].TienPhaiThu - +newValue
+      }
+    },
+
+    saveMonth: (state, action: PayloadAction<{ selectedMonths: string[] }>) => {
+      const { selectedMonths } = action.payload;
+      selectedMonths.map(item => {
+        const [kios, month] = item.split('@');
+
+        const monthIndex = state.months.findIndex((item) => item.MaKios === kios && item.Thang === month);
+        state.finalCollect.push(state.months[monthIndex])
+      })
+    }
   }
 })
+// Lặp qua mỗi chuỗi selectedMonths
+// selectedMonths.forEach((selectedMonth) => {
+//   // Tách chuỗi thành MaKios và Thang
+//   const [kios, month] = selectedMonth.split('@');
+
+//   // Tìm index của tháng trong state.months
+//   const monthIndex = state.months.findIndex((item) => item.MaKios === kios && item.Thang === month);
+
+//   // Kiểm tra xem có tìm thấy tháng không
+//   if (monthIndex !== -1) {
+//     const monthItem = state.months[monthIndex];
+
+//     // Nếu có DayData
+//     if (monthItem.DayData && monthItem.DayData.length > 0) {
+//       // Cập nhật ThuDuoc của các ngày có TrangThai không phải "Đã thu"
+//       monthItem.DayData.forEach((dayItem) => {
+//         if (dayItem.TrangThai !== "Đã thu") {
+//           dayItem.ThuDuoc = dayItem.TienPhaiThu;
+//           dayItem.ConLai = 0;
+//           dayItem.Du = 0;
+
+//           // SelectedService là tất cả các TenDichVu trong DichVu
+//           dayItem.SelectedService = dayItem.DichVu.map((dv) => dv.TenDichVu);
+//         }
+//       });
+
+//       // Tính tổng ThuDuoc của các ngày có TrangThai không phải "Đã thu"
+//       const totalThuDuoc = monthItem.DayData
+//         .filter((dayItem) => dayItem.TrangThai !== "Đã thu")
+//         .reduce((total, dayItem) => total + dayItem.ThuDuoc, 0);
+
+//       // Cập nhật lại SoTienThu và ConLai
+//       monthItem.SoTienThu = totalThuDuoc;
+//       monthItem.ConLai = 0;
+//       monthItem.selectedDays = "all";
+//     }
+//   }
+// });
 
 export const {
   setMonthTable,
@@ -421,6 +491,8 @@ export const {
   changeSelectedService,
   saveDayToMonth,
   changeInput,
+  changeMonthInput,
+  saveMonth,
   addMonthCollectForAll,
   addOrUpdateMonthCollectForSelected
 } = main.actions

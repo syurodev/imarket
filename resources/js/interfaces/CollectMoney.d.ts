@@ -1,16 +1,10 @@
-export type CollectMoney = {
+export type CustomerTable = {
   MaKhachHang: string,
   HoTen: string,
   TienNgay: number,
-  KhuVuc: {
-    Kios: {
-      MaKios: string,
-      NganhHang: string
-    }[]
-    MaKhuVuc: string
-    TenKhuVuc: string
-  },
-  MaHopDong: string,
+  CCCD: string,
+  SDT: string
+  KhuVuc: string
 }
 
 type NguonThu = {
@@ -88,12 +82,6 @@ type ReduxDayTable = {
     Tien: number;
   }[];
   SelectedService: string[]
-}
-
-type FinalCollect = {
-  MaKios: string,
-  Thang: string,
-  TongThu: number,
 }
 
 type DayCollect = {

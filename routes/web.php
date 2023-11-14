@@ -26,7 +26,7 @@ Route::get('/', function () {
 });
 
 Route::get('/thu-tien', function () {
-    return Inertia::render('Fee/CollectMoneyPage');
+    return Inertia::render('Fee/CustomerPage');
 });
 Route::get('/kios', function () {
     return Inertia::render('Kios/KiosPage');

@@ -11,7 +11,7 @@ import { DayTable, MonthTable, ReduxMonthTable } from '@/interfaces/CollectMoney
 import useMoney from '@/lib/formatMoney'
 import BigModal from '@/Components/Elememt/BigModal'
 import DayTableComponent from './DayTable'
-import { addMonthCollectForAll, addOrUpdateMonthCollectForSelected, setDayTable, setMonthTable } from '@/redux/features/main-slice'
+import { addMonthCollectForAll, addOrUpdateMonthCollectForSelected, changeMonthInput, saveMonth, setDayTable, setMonthTable } from '@/redux/features/main-slice'
 
 const INITIAL_VISIBLE_COLUMNS = ["Kios", "Tháng", "Ngày", "Tiền phải thu", "Số tiền thu", "Còn lại"];
 
@@ -545,11 +545,12 @@ const monthTableColumns = [
 
 type IProps = {
   MaKhachHang: string
+  onClose: () => void
 }
 
-const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
+const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang, onClose }) => {
   const dispatch = useDispatch()
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const { isOpen: isOpenDayTable, onOpen: onOpenDayTable, onOpenChange: onOpenChangeDayTable, onClose: onCloseDayTable } = useDisclosure();
   const [page, setPage] = React.useState(1);
   const [selectedKeys, setSelectedKeys] = React.useState<Selection>("all");
   const [rowsPerPage, setRowsPerPage] = React.useState(10); const [filterValue, setFilterValue] = React.useState("");
@@ -603,14 +604,14 @@ const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
   }, [visibleColumns]);
 
   const filteredItems = React.useMemo(() => {
-    let filteredAds = [...monthTableData];
+    let filteredMonths = [...monthTableData];
 
     if (hasSearchFilter) {
-      filteredAds = filteredAds.filter((destination) =>
-        destination?.MaKios.includes(filterValue),
+      filteredMonths = filteredMonths.filter((month) =>
+        month?.MaKios.includes(filterValue),
       );
     }
-    return filteredAds;
+    return filteredMonths;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthTableData, filterValue, statusFilter]);
 
@@ -636,7 +637,7 @@ const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
     setKiosSelected(kios)
     setMonthSelected(month)
     dispatch(setDayTable(dayData))
-    onOpen()
+    onOpenDayTable()
   }
 
   const renderCell = React.useCallback((month: ReduxMonthTable, columnKey: React.Key): React.ReactNode => {
@@ -698,10 +699,10 @@ const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
                   variant='bordered'
                   value={month.SoTienThu.toString()}
                   type='number'
-                // onChange={e => dispatch(changeInput({
-                //   Ngay: day.Ngay,
-                //   newValue: +e.target.value
-                // }))}
+                  onChange={e => dispatch(changeMonthInput({
+                    Month: `${month.MaKios}@${month.Thang}`,
+                    newValue: +e.target.value
+                  }))}
                 />
               </PopoverContent>
             </Popover>
@@ -811,6 +812,17 @@ const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
     [],
   );
 
+  const handleSave = () => {
+    const months = Array.from(selectedKeys)
+    dispatch(saveMonth({
+      selectedMonths: months as string[]
+    }))
+    const result = useAppSelector(state => state.mainReducer.finalCollect)
+    console.log(result)
+    toast.success("Thu thành công")
+    onClose()
+  }
+
   return (
     <>
       <Table
@@ -855,19 +867,33 @@ const MonthTableComponent: React.FC<IProps> = ({ MaKhachHang }) => {
         </TableBody>
       </Table>
 
+      <div className='w-full flex items-center justify-end gap-3'>
+        <Button
+          onPress={() => onClose()}
+        >
+          Đóng
+        </Button>
+        <Button
+          color='success'
+          onPress={handleSave}
+        >
+          Lưu
+        </Button>
+      </div>
+
       {
-        isOpen && (
+        isOpenDayTable && (
           <BigModal
-            isOpen={isOpen}
-            onClose={onClose}
-            onOpenChange={onOpenChange}
+            isOpen={isOpenDayTable}
+            onClose={onCloseDayTable}
+            onOpenChange={onOpenChangeDayTable}
             height='!h-[95%]'
             title={`Danh sách ${monthSelected} - ${kiosSelected}`}
           >
             <DayTableComponent
               kiosSelected={kiosSelected}
               monthSelected={monthSelected}
-              onClose={onClose}
+              onClose={onCloseDayTable}
             />
           </BigModal>
         )

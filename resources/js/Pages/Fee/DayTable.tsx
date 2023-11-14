@@ -360,6 +360,12 @@ const DayTableComponent: React.FC<IProps> = ({
   const bottomContent = React.useMemo(() => {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
+        {/* <span className="w-[30%] text-small text-default-400">
+          {selectedKeys === "all"
+            ? "Đã chọn tất cả các ngày"
+            : `${selectedKeys.size} trong ${filteredItems.length} ngày được chọn`}
+        </span> */}
+
         <Pagination
           showControls
           classNames={{
@@ -383,7 +389,7 @@ const DayTableComponent: React.FC<IProps> = ({
 
   const classNames = React.useMemo(
     () => ({
-      wrapper: ["max-h-[500px]", "max-w-full"],
+      wrapper: ["max-h-[450px]", "max-w-full"],
       th: ["text-default-500", "border-b", "border-divider"],
       td: [
         // changing the rows border radius
@@ -399,6 +405,22 @@ const DayTableComponent: React.FC<IProps> = ({
     }),
     [],
   );
+
+  const total = () => {
+    if (dayTableData.length > 0) {
+      let total = 0
+      dayTableData.map(item => {
+        if (item.TrangThai !== "Đã thu") {
+          return total += item.ThuDuoc
+        } else {
+          return total
+        }
+      })
+      return total
+    } else {
+      return 0
+    }
+  }
 
   return (
     <>
@@ -446,6 +468,8 @@ const DayTableComponent: React.FC<IProps> = ({
           )}
         </TableBody>
       </Table>
+
+      <span className='font-semibold'>Tổng thu: <span className='text-success'>{useMoney(total())}</span></span>
 
       <div className='flex gap-3 w-full justify-end items-center'>
         <Button

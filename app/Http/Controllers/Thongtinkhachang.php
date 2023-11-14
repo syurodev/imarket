@@ -251,60 +251,25 @@ class Thongtinkhachang extends Controller
         'MaKhachHang' => 'KH1',
         'MaHopDong' => 'SDS1',
         'HoTen' => 'Bùi Văn Hoàng Tý',
-        'TienNgay' => 125000,
-        'KhuVuc' => [
-          'MaKhuVuc' => 'KV1',
-          'TenKhuVuc' => 'KHU DÃY NHÀ BẠC ',
-          'Kios' => [
-            [
-              'MaKios' => '22',
-              'NganhHang' => 'sữa điện lạnh',
-            ], [
-              'MaKios' => '30',
-              'NganhHang' => 'đồ ăn',
-            ]
-          ],
-        ]
+        'CCCD' => "837461238131",
+        'SDT' => "0946738123",
+        'KhuVuc' => "Khu Nhà Bạc",
       ],
       [
         'MaKhachHang' => 'KH2',
         'MaHopDong' => 'SDS2',
         'HoTen' => 'Nguyen Van 2',
-        'TienNgay' => 125000,
-        'KhuVuc' => [
-          'MaKhuVuc' => 'KV1',
-          'TenKhuVuc' => 'KHU DÃY NHÀ BẠC ',
-          'Kios' => [
-            [
-              'MaKios' => '24',
-              'NganhHang' => 'sữa điện lạnh',
-            ], [
-              'MaKios' => '31',
-              'NganhHang' => 'quần áo',
-            ]
-          ],
-
-
-        ]
+        'CCCD' => "837461291131",
+        'SDT' => "0946743923",
+        'KhuVuc' => "Khu Nhà Bạc",
       ],
       [
         'MaKhachHang' => 'KH3',
         'MaHopDong' => 'SDS3',
-        'TienNgay' => 125000,
         'HoTen' => 'Nguyen Van 3',
-        'KhuVuc' => [
-          'MaKhuVuc' => 'KV1',
-          'TenKhuVuc' => 'KHU DÃY NHÀ BẠC ',
-          'Kios' => [
-            [
-              'MaKios' => '26',
-              'NganhHang' => 'sữa điện lạnh',
-            ], [
-              'MaKios' => '33',
-              'NganhHang' => 'sữa điện lạnh',
-            ]
-          ],
-        ],
+        'CCCD' => "837430238131",
+        'SDT' => "0942912123",
+        'KhuVuc' => "Khu Nhà Bạc",
       ]
     ], 200);
   }
